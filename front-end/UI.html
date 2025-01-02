@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePoint Document Search</title>
+    <link rel="icon" type="image/x-icon"
+        href="C:\Users\ashutosh.behera\OneDrive - Acuvate Software Private Limited\Documents\Practice_folder\download.webp">
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Icons (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        html,
+        body {
+            height: 100vh;
+        }
+
+        .wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gradient-header {
+            background-color: #2F3C7E;
+            color: white;
+        }
+
+        .bg-primary {
+            background-color: #4B4B4B;
+        }
+
+        .loader {
+            display: none;
+            margin-left: 750px;
+        }
+
+        #img {
+            margin-left: -75px
+        }
+
+        svg {
+            width: 3.25em;
+            transform-origin: center;
+            animation: rotate4 2s linear infinite;
+        }
+
+        circle {
+            fill: none;
+            stroke: hsl(214, 97%, 59%);
+            stroke-width: 2;
+            stroke-dasharray: 1, 200;
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            animation: dash4 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotate4 {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes dash4 {
+            0% {
+                stroke-dasharray: 1, 200;
+                stroke-dashoffset: 0;
+            }
+
+            50% {
+                stroke-dasharray: 90, 200;
+                stroke-dashoffset: -35px;
+            }
+
+            100% {
+                stroke-dashoffset: -125px;
+            }
+        }
+
+        footer {
+            height: 3rem;
+            width: 100%;
+            position: fixed;
+            left: 0;
+            bottom: 0;
+        }
+
+        .btn-primary {
+            background-color: #2F3C7E
+        }
+
+        .credits-box {
+            position: absolute;
+            background-color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 10px;
+            z-index: 1000;
+            color: #000;
+            box-shadow: 10px 5px 5px rgb(87, 87, 87);
+            opacity: 0;
+            /* Set initial opacity to 0 */
+            visibility: hidden;
+            /* Hide the element */
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            /* Transition both opacity and visibility */
+        }
+
+        .navbar-nav .nav-item:hover .credits-box {
+            opacity: 1;
+            /* Set opacity to 1 on hover */
+            visibility: visible;
+            /* Make the element visible */
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <!-- Header -->
+    <header class="gradient-header text-white py-3 mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <img id="img"
+                src="https://cdn-ilaekap.nitrocdn.com/PHtGhqpMISHQletWXvpNyCuhTmLlyfvs/assets/images/optimized/rev-c51971d/acuvate.com/wp-content/uploads/2020/02/acuvate-white-logo-3.png"
+                alt="Company Logo" style="width: 200px; height: 50px;">
+            <h1 class="h4 mb-0 mx-auto text-center">SharePoint Document Search</h1>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" style="text-decoration: none; color: white">Credits</a>
+                    <div class="credits-box">
+                        <p>Kaiser Zahoor : Function App</p>
+                        <p>Ashuthosh Behera : JavaScript</p>
+                        <p>Deeksha Holi : Indexing and UI</p>
+                        <p>Preetham : Function App</p>
+                        <p>Suchitha : Indexing and UI</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </header>
+    <!-- Search Form -->
+    <div class="container">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form id="search-form">
+                    <div class="form-row align-items-center">
+                        <div class="col-md-6">
+                            <label for="query" class="sr-only">Enter your query</label>
+                            <input type="text" class="form-control" id="query" name="query"
+                                placeholder="Enter your query..." required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="department" class="sr-only">Department</label>
+                            <select id="department" name="department" class="form-control">
+                                <option value="none">Select Department</option>
+                                <option value="IT">IT</option>
+                                <option value="HR">HR</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-1">
+                            <span class="cancel-icon text-muted" onclick="clearSearch()" style="cursor: pointer;">
+                                <i class="fas fa-times"></i>
+                            </span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Loading Spinner -->
+    <div class="loader" id="loader">
+        <svg viewBox="25 25 50 50">
+            <circle r="20" cy="50" cx="50"></circle>
+        </svg>
+    </div>
+    <!-- Results Section -->
+    <div class="container">
+        <h2 class="h5">Answer:</h2>
+        <div id="answer" class="alert alert-info" style="display: none;"></div>
+        <h2 class="h5 mt-4">Relevant Documents:</h2>
+        <div id="search-results" class="list-group" style="display: none;"></div>
+    </div>
+    <!-- Footer -->
+    <footer class="text-white text-center py-3 mt-5" style="background-color: #4B4B4B;">
+        <!-- <p class="mb-0">Created with <i class="fas fa-heart" style="color: red;"></i> by Kaiser and team</p> -->
+         <p>&copy; 2024 ACUVATE SOFTWARE PVT LTD. All Rights Reserved.</p>
+         <!-- <p>Contact us: <a href="">info@acuvate.com</a></p> -->
+    </footer>
+    <script>
+        //Adding an Event Listener
+        document.getElementById('search-form').addEventListener('submit', async (event) => {
+            //Preventing the Default Form Behavior
+            event.preventDefault();
+            const query = document.getElementById('query').value;
+            const department = document.getElementById('department').value;
+            const departmentFilter = department === "none" ? null : department;
+
+            
+            document.getElementById('loader').style.display = 'block';
+            try {
+                const response = await fetch('http://localhost:7071/api/search_doc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query, department: departmentFilter })
+                });
+                if (!response.ok) {
+                    document.getElementById('answer').textContent = 'Error occurred during search.';
+                    return;
+                }
+
+
+                const data = await response.json();
+                const answer = data.answer;
+                const searchResults = data.search_results;
+                document.getElementById('answer').textContent = answer;
+                document.getElementById('answer').style.display = 'block';
+                const uniqueResults = [];
+                const uniqueFiles = new Set();
+                searchResults.forEach(result => {
+                    if (!uniqueFiles.has(result.file_name_sp)) {
+                        uniqueFiles.add(result.file_name_sp);
+                        uniqueResults.push(result);
+                    }
+                });
+                const resultsContainer = document.getElementById('search-results');
+                resultsContainer.innerHTML = '';
+                uniqueResults.forEach(result => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+                    const linkEl = document.createElement('a');
+
+                    linkEl.href = result.Download_link;
+                    linkEl.textContent = result.file_name_sp;
+                    linkEl.target = '_blank';
+                    const downloadButton = document.createElement('a');
+                    downloadButton.href = result.Download_link;
+                    downloadButton.textContent = 'View';
+                    downloadButton.classList.add('btn', 'btn-link', 'text-primary');
+                    downloadButton.download = '';
+                    resultDiv.appendChild(linkEl);
+                    resultDiv.appendChild(downloadButton);
+                    resultsContainer.appendChild(resultDiv);
+                    // const score = document.createElement('p');
+                    // score.textContent = `Score: ${result.search.score}`;
+                    // resultsContainer.appendChild(score)
+                    const score = document.createElement('div');
+                    score.textContent = `Score: ${result['@search.score']}`;
+                    resultDiv.appendChild(score);
+
+                    const modified = document.createElement('div');
+                    modified.textContent = `Modified: ${result['Modified']}`;
+                    resultDiv.appendChild(modified);
+
+                });
+                resultsContainer.style.display = 'block';
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('answer').textContent = 'Error occurred during search.';
+            } finally {
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
+            }
+        });
+        function clearSearch() {
+            document.getElementById('query').value = '';
+            document.getElementById('answer').style.display = 'none';
+            document.getElementById('search-results').style.display = 'none';
+        }
+    </script>

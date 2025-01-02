@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Azure Search App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #searchResults {
+      margin-top: 20px;
+    }
+    .result-item {
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div>
+    <input type="text" id="searchQuery" placeholder="Enter search query">
+    <select id="categoryDropdown">
+      <option value="None">None</option>
+      <option value="HR">HR</option>
+      <option value="IT">IT</option>
+      <!-- Add more categories as needed -->
+    </select>
+    <button id="searchButton">Search</button>
+  </div>
+
+  <div id="searchResults"></div>
+
+  <script>
+    document.getElementById('searchButton').addEventListener('click', function () {
+      const query = document.getElementById('searchQuery').value;
+      const department = document.getElementById('categoryDropdown').value;
+
+      if (!query) {
+        alert('Please enter a search query.');
+        return;
+      }
+
+      // Create the body of the request
+      const requestBody = {
+        query: query,
+        department: department === "None" ? null : department  // Set department to null if None is selected
+      };
+      console.log("Request Body:", requestBody);
+
+      // Send the search request to the Azure Function App
+      fetch('http://localhost:7071/api/search_doc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Display the search results in HTML
+        let resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '';  // Clear any previous results
+
+        if (data && data.length > 0) {
+          data.forEach(result => {
+            // Assuming `result` has `title`, `description`, and `url`
+            resultsDiv.innerHTML += `
+              <div class="result-item">
+                <h3>${result.file_name_sp}</h3>
+                <p>${result.content}</p>
+                <a href="${result.Download_link}">${result.file_name_sp}</a>
+                
+              </div>
+            `;
+          });
+        } else {
+          resultsDiv.innerHTML = '<p>No results found.</p>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('searchResults').innerHTML = '<p>Error performing search. Please try again later.</p>';
+      });
+    });
+  </script>
+
+</body>
+</html>
